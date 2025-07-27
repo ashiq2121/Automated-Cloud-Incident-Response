@@ -9,12 +9,17 @@ It is an automated incident response system for AWS that:
 4. Saves evidence to S3
 
 # Features
-- **Auto-containment**: Isolates instance via Security Group
-- **Disk Forensics**: Captures EBS snapshot
-- **Evidence Logging**: Stores metadata in S3
+
+| Feature              | Description                                                 |
+|----------------------|-------------------------------------------------------------|
+| Auto-Containment  | Attaches "ISOLATION" Security Group to suspected instance   |
+| EBS Forensics     | Creates snapshots of attached volumes                       |
+| Evidence Logging  | Metadata (instance ID, snapshots, timestamp) saved to S3    |
+| Fully Serverless  | Powered by AWS Lambda + CloudFormation                      |
 
 
-# Architecture
+# General Architecture
+![Architecture](https://github.com/user-attachments/assets/58945aeb-2ab4-40ac-8400-50a290fc44b8)
 
 # Deployment
 1. Launch EC2 instance
@@ -24,4 +29,6 @@ It is an automated incident response system for AWS that:
 
 # Screenshots
 
-- [Isolated Instance](
+- [Isolated Instance](Documents/Screenshots/EC2isolated.jpg)
+- [Snapshot Created](Documents/Screenshots/snapshotcreated.jpg)
+- [Metadata Saved](Documents/Screenshots/s3metadata.jpg)
