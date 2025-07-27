@@ -5,20 +5,31 @@
 #   3. Integrates with GuardDuty alerts (simulated via manual triggers)
 
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Forensic Automation with Isolation + Data Extraction to S3
+Description: Foolproof Forensic Automation with Isolation + S3
 
+# Parameters let you customize the deployment without modifying the template
 Parameters:
   S3BucketName:
-    Description: Name of your S3 bucket (e.g., "yourname-forensics")
+    Description: Name of your S3 bucket to store forensic metadata
     Type: String
-    Default: "ashiq-forensics-ap-southeast-1"  # Name of bucket
+    Default: "ashiq-forensics-ap-southeast-1"
+
   IsolationSGId:
-    Description: ID of the 'ISOLATION' security group (e.g., "sg-12345678")
+    Description: ID of the Security Group used to isolate a compromised EC2 instance
     Type: String
-    Default: "sg-03355d8255b7bcbb4" # ID of isolation Security Group
+    Default: "sg-03355d8255b7bcbb4"
+
+  LambdaCodeS3Bucket:
+    Description: Name of the S3 bucket that contains the zipped Lambda function code
+    Type: String
+
+  LambdaCodeS3Key:
+    Description: S3 key (path) to the zipped Lambda function code (e.g. lambda/function.zip)
+    Type: String
 
 Resources:
-  # IAM Role: Grants Lambda permission to interact with EC2/S3
+
+  # IAM role to allow Lambda to perform EC2 and S3 actions
   ForensicLambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -33,92 +44,36 @@ Resources:
         - PolicyName: ForensicPermissions
           PolicyDocument:
             Version: '2012-10-17'
-              # Allows isolating EC2 instances
-              # Allows creating disk snapshots
             Statement:
               - Effect: Allow
                 Action:
-                  - ec2:DescribeInstances
-                  - ec2:DescribeVolumes
-                  - ec2:CreateSnapshot
-                  - ec2:ModifyInstanceAttribute
-                  - s3:PutObject
-                  - s3:GetBucketLocation
+                  - ec2:DescribeInstances        # Required to look up instance info
+                  - ec2:DescribeVolumes         # Needed to find attached volumes
+                  - ec2:CreateSnapshot          # For creating EBS snapshots
+                  - ec2:ModifyInstanceAttribute # To attach the isolation security group
+                  - s3:PutObject                # Upload metadata to S3
+                  - s3:GetBucketLocation        # Optional sanity check
                 Resource: "*"
 
-   # Lambda Function: Core logic for incident response
+  # Lambda function that performs auto-isolation and forensic logging
   IncidentHandlerLambda:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: IncidentHandler
-      Handler: index.lambda_handler
+      Handler: incident_handler.lambda_handler     # Format: <filename>.<function>
       Runtime: python3.8
       Timeout: 120
       Role: !GetAtt ForensicLambdaRole.Arn
       Environment:
         Variables:
-          S3_BUCKET: !Ref S3BucketName  # Pass bucket name as env variable
-          ISOLATION_SG: !Ref IsolationSGId  # Pass SG ID as env variable
+          S3_BUCKET: !Ref S3BucketName             # Bucket to store forensic evidence
+          ISOLATION_SG: !Ref IsolationSGId         # Security Group for isolation
       Code:
-        ZipFile: |
-          import boto3
-          import json
-          import datetime
-          import os
-
-          def lambda_handler(event, context):
-              ec2 = boto3.client('ec2')
-              s3 = boto3.client('s3')
-              
-              # Get instance ID from test event
-              instance_id = event.get('detail', {}).get('resource', {}).get('instanceDetails', {}).get('instanceId', 'i-badbadbad')
-              
-              # 1. ISOLATION: Attach the ISOLATION security group
-              try:
-                  ec2.modify_instance_attribute(
-                      InstanceId=instance_id,
-                      Groups=[os.environ['ISOLATION_SG']]  # Uses the SG ID from env
-                  )
-                  print(f"Isolated instance {instance_id} with SG {os.environ['ISOLATION_SG']}")
-              except Exception as e:
-                  print(f"Isolation failed: {str(e)}")
-              
-              # 2. FORENSICS: Snapshot volumes
-              snapshot_ids = []
-              try:
-                  volumes = ec2.describe_volumes(
-                      Filters=[{'Name': 'attachment.instance-id', 'Values': [instance_id]}]
-                  ).get('Volumes', [])
-                  for vol in volumes:
-                      snapshot = ec2.create_snapshot(VolumeId=vol['VolumeId'])
-                      snapshot_ids.append(snapshot['SnapshotId'])
-                      print(f"Created snapshot: {snapshot['SnapshotId']}")
-              except Exception as e:
-                  print(f"Snapshot failed: {str(e)}")
-
-              # 3. EVIDENCE: Upload metadata to S3
-              try:
-                  s3.put_object(
-                      Bucket=os.environ['S3_BUCKET'],  # Uses bucket name from env
-                      Key=f"{instance_id}/metadata.json",
-                      Body=json.dumps({
-                          "instance_id": instance_id,
-                          "snapshots": snapshot_ids,
-                          "timestamp": str(datetime.datetime.now()),
-                          "status": "Success" if snapshot_ids else "Partial"
-                      })
-                  )
-                  print(f"Uploaded metadata to s3://{os.environ['S3_BUCKET']}/{instance_id}/metadata.json")
-              except Exception as e:
-                  print(f"S3 upload failed: {str(e)}")
-
-              return {
-                  "instance_id": instance_id,
-                  "snapshots": snapshot_ids,
-                  "s3_location": f"s3://{os.environ['S3_BUCKET']}/{instance_id}/metadata.json"
-              }
+        S3Bucket: !Ref LambdaCodeS3Bucket
+        S3Key: !Ref LambdaCodeS3Key
 
 Outputs:
   LambdaFunctionName:
-    Description: "Name of the Lambda function"
+    Description: "Name of the Lambda function created"
     Value: !Ref IncidentHandlerLambda
+
