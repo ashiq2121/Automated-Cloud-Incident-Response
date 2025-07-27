@@ -9,9 +9,6 @@ It is an automated incident response system for AWS that:
 4. Saves evidence to S3
 
 # Features
-- **Auto-containment**: Isolates instance via Security Group
-- **Disk Forensics**: Captures EBS snapshot
-- **Evidence Logging**: Stores metadata in S3
 
 | Feature              | Description                                                 |
 |----------------------|-------------------------------------------------------------|
