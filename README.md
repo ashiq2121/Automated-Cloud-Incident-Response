@@ -13,6 +13,13 @@ It is an automated incident response system for AWS that:
 - **Disk Forensics**: Captures EBS snapshot
 - **Evidence Logging**: Stores metadata in S3
 
+| Feature              | Description                                                 |
+|----------------------|-------------------------------------------------------------|
+| Auto-Containment  | Attaches "ISOLATION" Security Group to suspected instance   |
+| EBS Forensics     | Creates snapshots of attached volumes                       |
+| Evidence Logging  | Metadata (instance ID, snapshots, timestamp) saved to S3    |
+| Fully Serverless  | Powered by AWS Lambda + CloudFormation                      |
+
 
 # General Architecture
 ![Architecture](https://github.com/user-attachments/assets/58945aeb-2ab4-40ac-8400-50a290fc44b8)
