@@ -14,7 +14,8 @@ It is an automated incident response system for AWS that:
 - **Evidence Logging**: Stores metadata in S3
 
 
-# Architecture
+# General Architecture
+![Architecture](https://github.com/user-attachments/assets/58945aeb-2ab4-40ac-8400-50a290fc44b8)
 
 # Deployment
 1. Launch EC2 instance
