@@ -25,3 +25,4 @@ It is an automated incident response system for AWS that:
 # Screenshots
 
 - [Isolated Instance](Documents/Screenshots/EC2isolated.jpg)
+- [Snapshot Created](Documents/Screenshots/snapshotcreated.jpg)
