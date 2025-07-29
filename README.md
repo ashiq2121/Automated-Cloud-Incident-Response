@@ -22,12 +22,37 @@ It is an automated incident response system for AWS that:
 ![Architecture](https://github.com/user-attachments/assets/58945aeb-2ab4-40ac-8400-50a290fc44b8)
 
 # Deployment
+
+### Prerequisites  
+- AWS Account (free tier eligible)  
+- EC2 instance (test target)  
+- S3 bucket (evidence storage)
+ ### Steps 
 1. Launch EC2 instance
 2. Set up Isolation Security Group
 3. Deploy CloudFormation template
 4. Test with Lambda event
+ 
+ 
+<!--
+### Steps  
+1. **Create Isolation SG**:  
+  You can set this up using the command `aws ec2 create-security-group --group-name "ISOLATION" --description "Block all traffic"`
+2. **Deploy CloudFormation**:  
+   ```bash
+   aws cloudformation deploy \
+     --template-file cloudformation/forensic-automation.yaml \
+     --stack-name ForensicStack \
+     --parameter-overrides \
+         S3BucketName=your-forensics-bucket \
+         IsolationSGId=sg-12345678
+   ```
+3. **Test**:  
+   - Trigger Lambda with [test event](/lambda/test_event.json).
 
-# Screenshots
+-->
+
+# Key Screenshots
 
 - [Isolated Instance](Documents/Screenshots/EC2isolated.jpg)
 - [Snapshot Created](Documents/Screenshots/snapshotcreated.jpg)
