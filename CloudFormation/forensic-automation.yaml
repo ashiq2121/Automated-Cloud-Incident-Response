@@ -5,7 +5,7 @@
 #   3. Integrates with GuardDuty alerts (simulated via manual triggers)
 
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Foolproof Forensic Automation with Isolation + S3
+Description: Forensic Automation with Isolation + S3
 
 # Parameters let you customize the deployment without modifying the template
 Parameters:
